@@ -6,19 +6,25 @@
 
 class App {
  public:
+  ~App() {
+    if (flutter_view) delete flutter_view;
+    if (flutter_view2) delete flutter_view2;
+  }
+  
   Evas_Object *evas_image;
-  ElmFlutterView flutter_view;
+  ElmFlutterView *flutter_view;
+  ElmFlutterView *flutter_view2;
 
   static void _btn_clicked(void *data, Evas_Object *obj EINA_UNUSED,
                            void *event_info EINA_UNUSED) {
     App *app = (App *)data;
-    app->flutter_view.Resize(400, 600);
+    app->flutter_view->Resize(400, 600);
   }
 
   static void _btn_clicked2(void *data, Evas_Object *obj EINA_UNUSED,
                             void *event_info EINA_UNUSED) {
     App *app = (App *)data;
-    app->flutter_view.Resize(700, 300);
+    app->flutter_view->Resize(700, 1000);
   }
 
   bool OnCreate() {
@@ -57,20 +63,37 @@ class App {
     elm_box_pack_end(box, but);
     evas_object_show(but);
 
-    if (flutter_view.RunFlutterEngine(box, 720, 1000)) {
-      RegisterPlugins(&flutter_view);
-      evas_image = (Evas_Object *)flutter_view.evas_object();
+    flutter_view = new ElmFlutterView(box, 720, 400);
+    if (flutter_view->RunEngine()) {
+      RegisterPlugins(flutter_view);
+      evas_image = (Evas_Object *)flutter_view->evas_object();
       elm_box_pack_end(box, evas_image);
     }
 
     Evas_Object *button = elm_button_add(box);
-    elm_object_text_set(button, "Resize(700, 300)");
+    elm_object_text_set(button, "Resize(700, 1000)");
     evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND,
                                      EVAS_HINT_EXPAND);
     evas_object_size_hint_align_set(button, EVAS_HINT_FILL, EVAS_HINT_FILL);
     evas_object_smart_callback_add(button, "clicked", _btn_clicked2, this);
     evas_object_show(button);
     elm_box_pack_end(box, button);
+
+    Evas_Object *entry = elm_entry_add(box);
+    elm_entry_single_line_set(entry, EINA_TRUE);
+    elm_entry_scrollable_set(entry, EINA_TRUE);
+    elm_object_text_set(entry, "Entry Test");
+    evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+    evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
+    evas_object_show(entry);
+    elm_box_pack_end(box, entry);
+
+    flutter_view2 = new ElmFlutterView(box, 720, 400);
+    if (flutter_view2->RunEngine()) {
+      RegisterPlugins(flutter_view2);
+      Evas_Object *evas_image2 = (Evas_Object *)flutter_view2->evas_object();
+      elm_box_pack_end(box, evas_image2);
+    }
 
     for (int i = 0; i < 10; i++) {
       Evas_Object *button = elm_button_add(box);
@@ -81,7 +104,7 @@ class App {
       evas_object_show(button);
       elm_box_pack_end(box, button);
     }
-    return flutter_view.IsRunning();
+    return flutter_view->IsRunning();
   }
 };
 
