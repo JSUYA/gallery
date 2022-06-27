@@ -1,19 +1,19 @@
 #include "runner.h"
 
 #include <Elementary.h>
+#include <stdio.h>
 
 #include "generated_plugin_registrant.h"
+#include "tizen_log.h"
 
 class App {
  public:
   ~App() {
     if (flutter_view) delete flutter_view;
-    if (flutter_view2) delete flutter_view2;
   }
-  
-  Evas_Object *evas_image;
+
+  Evas_Object *evas_object;
   ElmFlutterView *flutter_view;
-  ElmFlutterView *flutter_view2;
 
   static void _btn_clicked(void *data, Evas_Object *obj EINA_UNUSED,
                            void *event_info EINA_UNUSED) {
@@ -25,6 +25,13 @@ class App {
                             void *event_info EINA_UNUSED) {
     App *app = (App *)data;
     app->flutter_view->Resize(700, 1000);
+  }
+
+  static void _change_cb(void *data EINA_UNUSED, Evas_Object *obj,
+                         void *event_info EINA_UNUSED) {
+    App *app = (App *)data;
+    int value = elm_slider_value_get(obj);
+    evas_object_geometry_set(app->evas_object, 0, 0, 600 + (value / 10), value);
   }
 
   bool OnCreate() {
@@ -54,6 +61,15 @@ class App {
     evas_object_size_hint_min_set(box, 400, 400);
     elm_object_content_set(scr, box);
 
+    Evas_Object *slider = elm_slider_add(box);
+    evas_object_size_hint_weight_set(slider, EVAS_HINT_EXPAND,
+                                     EVAS_HINT_EXPAND);
+    evas_object_size_hint_align_set(slider, EVAS_HINT_FILL, EVAS_HINT_FILL);
+    evas_object_smart_callback_add(slider, "changed", _change_cb, this);
+    elm_slider_min_max_set(slider, 400, 1000);
+    evas_object_show(slider);
+    elm_box_pack_end(box, slider);
+
     Evas_Object *but = elm_button_add(box);
     elm_object_text_set(but, "Resize(400, 600)");
     evas_object_size_hint_weight_set(but, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
@@ -66,8 +82,9 @@ class App {
     flutter_view = new ElmFlutterView(box, 720, 400);
     if (flutter_view->RunEngine()) {
       RegisterPlugins(flutter_view);
-      evas_image = (Evas_Object *)flutter_view->evas_object();
-      elm_box_pack_end(box, evas_image);
+      evas_object = (Evas_Object *)flutter_view->evas_object();
+      evas_object_show(evas_object);
+      elm_box_pack_end(box, evas_object);
     }
 
     Evas_Object *button = elm_button_add(box);
@@ -87,13 +104,6 @@ class App {
     evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
     evas_object_show(entry);
     elm_box_pack_end(box, entry);
-
-    flutter_view2 = new ElmFlutterView(box, 720, 400);
-    if (flutter_view2->RunEngine()) {
-      RegisterPlugins(flutter_view2);
-      Evas_Object *evas_image2 = (Evas_Object *)flutter_view2->evas_object();
-      elm_box_pack_end(box, evas_image2);
-    }
 
     for (int i = 0; i < 10; i++) {
       Evas_Object *button = elm_button_add(box);
@@ -115,6 +125,12 @@ int main(int argc, char *argv[]) {
   lifecycle_cb.create = [](void *data) -> bool {
     auto *app = reinterpret_cast<App *>(data);
     return app->OnCreate();
+  };
+  lifecycle_cb.resume = [](void *data) {
+    TizenLog::Debug("CJS Called App resume");
+  };
+  lifecycle_cb.pause = [](void *data) {
+    TizenLog::Debug("CJS Called App pause");
   };
 
   int ret = ui_app_main(argc, argv, &lifecycle_cb, (void *)&app);
