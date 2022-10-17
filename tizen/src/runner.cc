@@ -4,9 +4,11 @@
 
 #include "generated_plugin_registrant.h"
 
-class App {
- public:
-  bool OnCreate() {
+class App
+{
+public:
+  bool OnCreate()
+  {
     Evas_Object *win = elm_win_add(NULL, NULL, ELM_WIN_BASIC);
     elm_win_autodel_set(win, EINA_TRUE);
     elm_win_alpha_set(win, EINA_TRUE);
@@ -47,12 +49,13 @@ class App {
     auto flutter_view = new ElmFlutterView(box, 720, 800);
     flutter_view->SetEngine(std::move(engine));
 
-    if (flutter_view->RunEngine()) {
-      RegisterPlugins(flutter_view);
+    if (flutter_view->RunEngine())
+    {
+      RegisterPlugins(flutter_view->engine());
       auto evas_object =
           static_cast<Evas_Object *>(flutter_view->evas_object());
-      elm_box_pack_end(box, evas_object);  // Set the evas_object drawn to
-                                           // flutter to the content of the box.
+      elm_box_pack_end(box, evas_object); // Set the evas_object drawn to
+                                          // flutter to the content of the box.
     }
 
     Evas_Object *but2 = elm_button_add(box);
@@ -66,11 +69,13 @@ class App {
   }
 };
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
   App app;
 
   ui_app_lifecycle_callback_s lifecycle_cb = {};
-  lifecycle_cb.create = [](void *data) -> bool {
+  lifecycle_cb.create = [](void *data) -> bool
+  {
     auto *app = reinterpret_cast<App *>(data);
     return app->OnCreate();
   };
